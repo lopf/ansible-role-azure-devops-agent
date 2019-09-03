@@ -19,13 +19,19 @@
       - "--deploymentGroupTags '{{ az_devops_deployment_group_tags }}'"
       - "--projectname '{{ az_devops_project_name }}'"
 
+- name: Gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - default.yml
+  tags: vars
+
 - name: Install requirements
   package:
     name: "{{ item }}"
     state: present
-  loop:
-    - libcurl3
-    - libunwind8
+  loop: "{{ az_devops_agent_packages }}"
   register: result
   until: result is succeeded
 
@@ -57,7 +63,6 @@
 
 - name: Register agent service status
   shell: ./svc.sh status | grep -q \(running\)
-  become: true
   args:
     chdir: "{{ az_devops_agent_folder }}"
   changed_when: false
@@ -66,7 +71,6 @@
 
 - name: Uninstall agent service
   command: ./svc.sh uninstall
-  become: true
   args:
     chdir: "{{ az_devops_agent_folder }}"
     removes: "{{ az_devops_agent_folder }}/runsvc.sh"
@@ -113,16 +117,8 @@
   args:
     chdir: "{{ az_devops_agent_folder }}"
 
-- name: Copy unit file
+- name: Start agent service
+  command: ./svc.sh start
   become: true
-  template:
-    src: azure_devops_agent.service.j2
-    dest: /usr/lib/systemd/system/azure_devops_agent.service
-  notify: restart az-devops-agent
-
-- name: ensure az-devops-agent is enabled on boot
-  become: true
-  systemd:
-    daemon_reload: true
-    state: started
-    name: azure_devops_agent
+  args:
+    chdir: "{{ az_devops_agent_folder }}"
