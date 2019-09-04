@@ -1,6 +1,6 @@
 - name: Set agent config facts
   set_fact:
-    agent_cmd_args: 
+    agent_cmd_args:
       - "./config.sh"
       - "--unattended"
       - "--acceptteeeula"
@@ -19,10 +19,19 @@
       - "--deploymentGroupTags '{{ az_devops_deployment_group_tags }}'"
       - "--projectname '{{ az_devops_project_name }}'"
 
+- name: Gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - default.yml
+  tags: vars
+
 - name: Install requirements
-  apt:
-    name: ["libcurl3", "libunwind8"]
+  package:
+    name: "{{ item }}"
     state: present
+  loop: "{{ az_devops_agent_packages }}"
   register: result
   until: result is succeeded
 
@@ -39,15 +48,13 @@
     owner: "{{ az_devops_agent_user }}"
     group: "{{ az_devops_agent_user }}"
     mode: 0755
-  with_items:
+  loop:
     - "{{ az_devops_agent_folder }}"
     - "{{ az_devops_work_folder }}"
 
 - name: Download and unarchive
   unarchive:
-    src: "https://vstsagentpackage.azureedge.net/agent/\
-      {{ az_devops_agent_version }}/\
-      vsts-agent-linux-x64-{{ az_devops_agent_version }}.tar.gz"
+    src: "{{ az_devops_agent_package_url }}"
     dest: "{{ az_devops_agent_folder }}"
     remote_src: yes
     owner: "{{ az_devops_agent_user }}"
@@ -56,7 +63,6 @@
 
 - name: Register agent service status
   shell: ./svc.sh status | grep -q \(running\)
-  become: true
   args:
     chdir: "{{ az_devops_agent_folder }}"
   changed_when: false
@@ -65,7 +71,6 @@
 
 - name: Uninstall agent service
   command: ./svc.sh uninstall
-  become: true
   args:
     chdir: "{{ az_devops_agent_folder }}"
     removes: "{{ az_devops_agent_folder }}/runsvc.sh"
