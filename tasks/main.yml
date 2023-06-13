@@ -1,3 +1,4 @@
+---
 - name: Set agent config facts
   set_fact:
     agent_cmd_args:
@@ -56,7 +57,7 @@
   unarchive:
     src: "{{ az_devops_agent_package_url }}"
     dest: "{{ az_devops_agent_folder }}"
-    remote_src: yes
+    remote_src: true
     owner: "{{ az_devops_agent_user }}"
     group: "{{ az_devops_agent_user }}"
     creates: "{{ az_devops_agent_folder }}/config.sh"

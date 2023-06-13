@@ -1,3 +1,4 @@
+---
 galaxy_info:
   role_name: azure-devops-agent
   author: Yohan Belval
@@ -6,7 +7,7 @@ galaxy_info:
 
   license: "license (Apache-2.0)"
 
-  min_ansible_version: 2.4
+  min_ansible_version: 2.11
 
   platforms:
     - name: Ubuntu
@@ -14,6 +15,9 @@ galaxy_info:
         - trusty
         - xenial
         - bionic
+    - name: RHEL
+      versions:
+        - "9"
 
   galaxy_tags:
     - azure

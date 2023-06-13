@@ -1,0 +1,32 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: rocky9-ado
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-rockylinux9}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+  inventory:
+    group_vars:
+      all:
+        az_devops_accountname: example-org
+        az_devops_accesstoken: XXX
+        az_devops_project_name: example-project
+        az_devops_deployment_group_name: "Example group"
+        az_devops_agent_role: "deployment"
+verifier:
+  name: ansible
+lint: |
+  set -e
+  yamllint .
+  ansible-lint

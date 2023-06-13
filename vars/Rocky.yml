@@ -1,4 +1,5 @@
 ---
 az_devops_agent_packages:
-  - libcurl
+  - libcurl-minimal
   - libunwind
+  - libicu
